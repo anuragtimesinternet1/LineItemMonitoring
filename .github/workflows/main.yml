@@ -4,7 +4,6 @@ on:
   schedule:
     # Runs every 15 minutes
     - cron: '*/15 * * * *'
-  workflow_dispatch:  # This adds a manual trigger option
 
 jobs:
   run_script:
@@ -17,21 +16,23 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.12.3'  # Specify the Python version you are using
+          python-version: '3.12.3'
 
       - name: Install dependencies
         run: |
           pip install googleads gspread oauth2client
 
-      - name: Print GOOGLE_APPLICATION_CREDENTIALS
+      - name: Check credentials file
         run: |
           echo "Contents of GOOGLE_APPLICATION_CREDENTIALS:"
-          echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"  # Print the secret directly
+          echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" | base64 --decode > credentials.json
+          cat credentials.json  # Print the contents (not recommended for production)
 
-      - name: Print GOOGLE_APPLICATION_GOOGLEADS
+      - name: Check googleads.yaml file
         run: |
           echo "Contents of GOOGLE_APPLICATION_GOOGLEADS:"
-          echo "${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}"  # Print the secret directly
+          echo "${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}" | base64 --decode > googleads.yaml
+          cat googleads.yaml  # Print the contents (not recommended for production)
 
       - name: Run the script
         env:
@@ -39,4 +40,4 @@ jobs:
           GOOGLE_APPLICATION_GOOGLEADS: ${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
         run: |
-          python githubmain.py  # Ensure this matches the actual name of your script
+          python githubmain.py  # Replace with the actual name of your script
