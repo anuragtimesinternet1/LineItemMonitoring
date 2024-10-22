@@ -26,28 +26,28 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt  # Ensure you have a requirements.txt file with all dependencies
 
-      # Step 4: Set GOOGLE_APPLICATION_CREDENTIALS from GitHub Secrets
+      # Step 4: Create GOOGLE_APPLICATION_CREDENTIALS file
       - name: Create GOOGLE_APPLICATION_CREDENTIALS file
         run: |
           echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" > $HOME/credentials.json
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: $HOME/credentials.json  # Set it explicitly in the env block
+          GOOGLE_APPLICATION_CREDENTIALS: $HOME/credentials.json
 
-      # Step 5: Create googleads.yaml from a base64-encoded secret
+      # Step 5: Create googleads.yaml from the GOOGLE_APPLICATION_GOOGLEADS secret
       - name: Create googleads.yaml file
         run: |
-          echo "${{ secrets.GOOGLEADS_CONFIG }}" | base64 --decode > $HOME/googleads.yaml
+          echo "${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}" > $HOME/googleads.yaml
         env:
-          GOOGLEADS_CONFIG: $HOME/googleads.yaml  # Set this in the env block
+          GOOGLE_APPLICATION_GOOGLEADS: $HOME/googleads.yaml  # Ensure this variable is passed to the script
 
-      # Step 6: Set EMAIL_PASSWORD from GitHub Secrets
-      - name: Set EMAIL_PASSWORD
-        run: echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> $GITHUB_ENV
+      # Step 6: Debugging environment variables
+      - name: Debug Environment Variables
+        run: printenv | grep GOOGLE  # Print all environment variables related to GOOGLE to check if they're set correctly
 
       # Step 7: Run the Python script
       - name: Run the Python script
         run: python githubmain.py
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: $HOME/credentials.json  # Make sure to pass this to the script
-          GOOGLEADS_CONFIG: $HOME/googleads.yaml  # Ensure googleads.yaml is set in the environment
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}  # Pass email password secret to the script
+          GOOGLE_APPLICATION_CREDENTIALS: $HOME/credentials.json
+          GOOGLEADS_CONFIG: $HOME/googleads.yaml
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
