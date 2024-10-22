@@ -40,24 +40,25 @@ jobs:
           echo "${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}" > $HOME/googleads.yaml
         # Set environment variable for Google Ads config
         env:
-          GOOGLEADS_CONFIG: $HOME/googleads.yaml
+          GOOGLE_APPLICATION_GOOGLEADS: $HOME/googleads.yaml  # Explicitly set this variable
+          GOOGLEADS_CONFIG: $HOME/googleads.yaml  # Also keep this for backward compatibility
 
       # Step 6: Set environment variables explicitly using 'echo' to the GitHub environment
       - name: Set environment variables
         run: |
           echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/credentials.json" >> $GITHUB_ENV
-          echo "GOOGLEADS_CONFIG=$HOME/googleads.yaml" >> $GITHUB_ENV
+          echo "GOOGLE_APPLICATION_GOOGLEADS=$HOME/googleads.yaml" >> $GITHUB_ENV
 
       # Step 7: Debugging environment variables
       - name: Verify environment variables
         run: |
           echo "GOOGLE_APPLICATION_CREDENTIALS: $GOOGLE_APPLICATION_CREDENTIALS"
-          echo "GOOGLEADS_CONFIG: $GOOGLEADS_CONFIG"
+          echo "GOOGLE_APPLICATION_GOOGLEADS: $GOOGLE_APPLICATION_GOOGLEADS"
 
       # Step 8: Run the Python script
       - name: Run the Python script
         run: python githubmain.py
         env:
           GOOGLE_APPLICATION_CREDENTIALS: $HOME/credentials.json
-          GOOGLEADS_CONFIG: $HOME/googleads.yaml
+          GOOGLE_APPLICATION_GOOGLEADS: $HOME/googleads.yaml
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
