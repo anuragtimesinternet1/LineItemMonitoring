@@ -23,15 +23,15 @@ jobs:
         run: |
           pip install googleads gspread oauth2client
 
-      - name: Print credentials.json
+      - name: Print GOOGLE_APPLICATION_CREDENTIALS
         run: |
-          echo "Contents of credentials.json:"
-          cat path/to/your/credentials.json  # Update with the actual path
+          echo "Contents of GOOGLE_APPLICATION_CREDENTIALS:"
+          echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" | base64 --decode  # Decoding base64 if necessary
 
-      - name: Print googleads.yaml
+      - name: Print GOOGLE_APPLICATION_GOOGLEADS
         run: |
-          echo "Contents of googleads.yaml:"
-          cat path/to/your/googleads.yaml  # Update with the actual path
+          echo "Contents of GOOGLE_APPLICATION_GOOGLEADS:"
+          echo "${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}" | base64 --decode  # Decoding base64 if necessary
 
       - name: Run the script
         env:
