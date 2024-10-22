@@ -26,5 +26,6 @@ jobs:
     - name: Run GitHub Main Script
       env:
         EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}  # Access your email password from GitHub Secrets
+        GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}  # Access your credentials
       run: |
         python githubmain.py  # Run your Python script
