@@ -23,7 +23,17 @@ def load_google_sheets_credentials():
     return os.environ['GOOGLE_APPLICATION_CREDENTIALS']
 
 def load_google_ads_credentials():
-    return os.environ['GOOGLE_APPLICATION_GOOGLEADS']
+    google_ads_file = os.environ.get('GOOGLE_APPLICATION_GOOGLEADS')
+    if not google_ads_file:
+        logging.error("GOOGLE_APPLICATION_GOOGLEADS environment variable not set.")
+        raise ValueError("Missing GOOGLE_APPLICATION_GOOGLEADS")
+    
+    # Check if the file exists
+    if not os.path.isfile(google_ads_file):
+        logging.error(f"Google Ads credentials file not found: {google_ads_file}")
+        raise ValueError(f"File not found: {google_ads_file}")
+
+    return google_ads_file
 
 # Fetches the line items and thresholds from Google Sheets.
 def get_google_sheets_data(sheet_url, sheet_name):
