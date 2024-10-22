@@ -1,31 +1,32 @@
-name: Run Script Every 15 Minutes
+name: Scheduled Python Script
 
 on:
   schedule:
-    - cron: '*/15 * * * *'  # This sets the schedule to run every 15 minutes
-  workflow_dispatch:  # Allows manual triggering of the workflow
+    - cron: '*/15 * * * *'  # This runs the job at the start of every hour
 
 jobs:
-  run_script:
+  run-script:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v2
 
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.8'  # Specify the Python version you need
+          python-version: '3.12.3'  # Specify the Python version you need
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt  # Make sure you have a requirements.txt file with your dependencies
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt  # Ensure you have a requirements.txt file with all dependencies
 
-      - name: Create credentials file from secrets
+      - name: Set environment variables
         run: |
-          echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" > temp_credentials.json
-          echo "${{ secrets.EMAIL_PASSWORD }}" > email_password.txt
+          echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> $GITHUB_ENV
+          echo "GOOGLE_APPLICATION_CREDENTIALS=${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" >> $GITHUB_ENV
+          echo "GOOGLE_APPLICATION_GOOGLEADS=${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}" >> $GITHUB_ENV
 
-      - name: Run the script
+      - name: Run the Python script
         run: python githubmain.py
