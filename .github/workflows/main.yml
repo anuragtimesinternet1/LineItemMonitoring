@@ -23,14 +23,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt  # Ensure you have a requirements.txt file with all dependencies
 
+      - name: Create googleads.yaml file
+        run: |
+          echo "${{ secrets.GOOGLEADS_CONFIG }}" | base64 --decode > $HOME/googleads.yaml
+
       - name: Create credentials file
         run: |
           echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" > $HOME/credentials.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/credentials.json" >> $GITHUB_ENV
-
-      - name: Check GOOGLE_APPLICATION_GOOGLEADS secret
-        run: |
-          echo "${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}" | wc -c # Prints the character count of the secret
 
       - name: Decode GOOGLE_APPLICATION_GOOGLEADS secret
         run: |
