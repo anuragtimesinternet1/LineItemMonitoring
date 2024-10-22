@@ -26,25 +26,35 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt  # Ensure you have a requirements.txt file with all dependencies
 
-      # Step 4: Create GOOGLE_APPLICATION_CREDENTIALS file
+      # Step 4: Create GOOGLE_APPLICATION_CREDENTIALS file from secret
       - name: Create GOOGLE_APPLICATION_CREDENTIALS file
         run: |
           echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" > $HOME/credentials.json
+        # Set environment variable for Google credentials
         env:
           GOOGLE_APPLICATION_CREDENTIALS: $HOME/credentials.json
 
-      # Step 5: Create googleads.yaml from the GOOGLE_APPLICATION_GOOGLEADS secret
+      # Step 5: Create googleads.yaml file from the GOOGLE_APPLICATION_GOOGLEADS secret
       - name: Create googleads.yaml file
         run: |
           echo "${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}" > $HOME/googleads.yaml
+        # Set environment variable for Google Ads config
         env:
-          GOOGLE_APPLICATION_GOOGLEADS: $HOME/googleads.yaml  # Ensure this variable is passed to the script
+          GOOGLEADS_CONFIG: $HOME/googleads.yaml
 
-      # Step 6: Debugging environment variables
-      - name: Debug Environment Variables
-        run: printenv | grep GOOGLE  # Print all environment variables related to GOOGLE to check if they're set correctly
+      # Step 6: Set environment variables explicitly using 'echo' to the GitHub environment
+      - name: Set environment variables
+        run: |
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/credentials.json" >> $GITHUB_ENV
+          echo "GOOGLEADS_CONFIG=$HOME/googleads.yaml" >> $GITHUB_ENV
 
-      # Step 7: Run the Python script
+      # Step 7: Debugging environment variables
+      - name: Verify environment variables
+        run: |
+          echo "GOOGLE_APPLICATION_CREDENTIALS: $GOOGLE_APPLICATION_CREDENTIALS"
+          echo "GOOGLEADS_CONFIG: $GOOGLEADS_CONFIG"
+
+      # Step 8: Run the Python script
       - name: Run the Python script
         run: python githubmain.py
         env:
