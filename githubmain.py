@@ -1,12 +1,26 @@
+import os
+import base64
+import json
 import smtplib
 from email.message import EmailMessage
 from googleads import ad_manager
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-# Setup Google Sheets API
+# Load Google Sheets API credentials from environment variable
+def load_google_sheets_credentials():
+    credentials_json = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
+    with open('credentials.json', 'wb') as f:
+        f.write(base64.b64decode(credentials_json))
+
+# Load Google Ads API credentials from environment variable
+def load_google_ads_credentials():
+    google_ads_json = os.environ['GOOGLE_APPLICATION_GOOGLEADS']
+    with open('googleads.yaml', 'wb') as f:
+        f.write(base64.b64decode(google_ads_json))
+
+# Fetches the line items and thresholds from Google Sheets.
 def get_google_sheets_data(sheet_url, sheet_name):
-    """Fetches the line items and thresholds from Google Sheets."""
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
     creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
     client = gspread.authorize(creds)
@@ -14,9 +28,8 @@ def get_google_sheets_data(sheet_url, sheet_name):
     data = sheet.get_all_records()
     return data
 
-
+# Updates Google Sheets to remove completed line item IDs.
 def update_google_sheets(sheet_url, sheet_name, completed_ids):
-    """Updates Google Sheets to remove completed line item IDs."""
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
     creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
     client = gspread.authorize(creds)
@@ -31,13 +44,13 @@ def update_google_sheets(sheet_url, sheet_name, completed_ids):
    
     if current_data:
         sheet.append_row(list(current_data[0].keys()))  # Append headers
-        for data in current_data:
+        for data in updated_data:  # Append the actual data
             sheet.append_row(list(data.values()))  # Append the actual data
     else:
         print("No current data available to append.")
 
+# Retrieve the stats for a specific line item.
 def get_line_item_stats(client, line_item_id):
-    """Retrieve the stats for a specific line item."""
     line_item_service = client.GetService('LineItemService', version='v202408')
    
     statement = (ad_manager.StatementBuilder()
@@ -55,8 +68,8 @@ def get_line_item_stats(client, line_item_id):
            
     return 0
 
+# Retrieve the status for a specific line item.
 def get_line_item_status(client, line_item_id):
-    """Retrieve the status for a specific line item."""
     line_item_service = client.GetService('LineItemService', version='v202408')
    
     statement = (ad_manager.StatementBuilder()
@@ -72,8 +85,8 @@ def get_line_item_status(client, line_item_id):
            
     return None
 
+# Pause the specified line item if it is in a state that allows it to be paused.
 def pause_line_item(client, line_item_id):
-    """Pause the specified line item if it is in a state that allows it to be paused."""
     line_item_service = client.GetService('LineItemService', version='v202408')
    
     statement = (ad_manager.StatementBuilder()
@@ -96,8 +109,15 @@ def pause_line_item(client, line_item_id):
     else:
         print(f"Line item {line_item_id} not found.")
 
+# Send an email to notify about the line item status.
 def send_email(line_item_id, impressions, threshold, status):
-    """Send an email to notify about the line item status."""
+    EMAIL_PASSWORD = os.environ['EMAIL_PASSWORD']  # Use the secret stored in GitHub
+    sender_email = "anurag.mishra1@timesinternet.in"
+    recipient_emails = [
+        # "colombia.opsqc@timesinternet.in",
+        "nitesh.pandey1@timesinternet.in"
+    ]
+
     if status == 'COMPLETED':
         email_body = f"""
         Hi,
@@ -112,13 +132,6 @@ def send_email(line_item_id, impressions, threshold, status):
         The line item {line_item_id} has delivered {impressions} impressions.
         Monitoring continues. The line item will be paused upon reaching the threshold of {threshold}.
         """
-
-    EMAIL_PASSWORD = "qqdr xsuu alfs qugc"  # Use your actual app password
-    sender_email = "anurag.mishra1@timesinternet.in"
-    recipient_emails = [
-        # "colombia.opsqc@timesinternet.in",
-        "nitesh.pandey1@timesinternet.in"
-    ]
 
     msg = EmailMessage()
     msg['Subject'] = f"TESTING| Line Item {line_item_id} Status Update"
@@ -136,6 +149,8 @@ def send_email(line_item_id, impressions, threshold, status):
         print(f"Failed to send email: {e}")
 
 def main():
+    load_google_sheets_credentials()  # Load Google Sheets credentials
+    load_google_ads_credentials()  # Load Google Ads credentials
     client = ad_manager.AdManagerClient.LoadFromStorage('googleads.yaml')
    
     # Fetch line items and thresholds from Google Sheets
@@ -174,5 +189,5 @@ def main():
     if completed_ids:
         update_google_sheets(sheet_url, sheet_name, completed_ids)
 
-
-main()
+if __name__ == "__main__":
+    main()
