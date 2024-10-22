@@ -1,0 +1,30 @@
+name: Run GitHub Main Script Every 5 Minutes
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # This will run the workflow every 5 minutes
+  workflow_dispatch:  # Allows manual triggering of the workflow
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest  # Use the latest Ubuntu version
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3  # Check out the repository code
+
+    - name: Set up Python
+      uses: actions/setup-python@v4  # Set up the Python environment
+      with:
+        python-version: '3.12.3'  # Specify the version of Python
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt  # Install dependencies
+
+    - name: Run GitHub Main Script
+      env:
+        EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}  # Access your email password from GitHub Secrets
+      run: |
+        python githubmain.py  # Run your Python script
