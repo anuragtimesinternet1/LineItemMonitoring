@@ -31,7 +31,9 @@ jobs:
       - name: Set other environment variables
         run: |
           echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> $GITHUB_ENV
-          echo "GOOGLE_APPLICATION_GOOGLEADS=${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}" >> $GITHUB_ENV
+          
+          # For multi-line variables, write them directly to the environment
+          echo "${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}" >> $GITHUB_ENV
 
       - name: Run the Python script
         run: python githubmain.py
