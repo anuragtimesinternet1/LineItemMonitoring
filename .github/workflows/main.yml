@@ -3,7 +3,8 @@ name: Run Python Script on Schedule
 on:
   schedule:
     # Runs at 00:00 UTC every day
-    - cron: '*/15 * * * *'
+    - cron: '*/15 * * * *' 
+  workflow_dispatch:  # Allows manual triggering of the workflow
 
 jobs:
   run-script:
@@ -16,7 +17,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.8'  # Specify your desired Python version
+          python-version: '3.12.3'  # Specify your desired Python version
 
       - name: Install dependencies
         run: |
