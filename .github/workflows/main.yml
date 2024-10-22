@@ -4,7 +4,7 @@ on:
   schedule:
     # Runs every 15 minutes
     - cron: '*/15 * * * *'
-  workflow_dispatch:  # Allows manual triggering of the workflow
+  workflow_dispatch:  # This adds a manual trigger option
 
 jobs:
   run_script:
@@ -23,12 +23,20 @@ jobs:
         run: |
           pip install googleads gspread oauth2client
 
-      - name: Decode credentials
-        run: echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_BASE64 }}" | base64 -d > credentials.json
+      - name: Print credentials.json
+        run: |
+          echo "Contents of credentials.json:"
+          cat path/to/your/credentials.json  # Update with the actual path
+
+      - name: Print googleads.yaml
+        run: |
+          echo "Contents of googleads.yaml:"
+          cat path/to/your/googleads.yaml  # Update with the actual path
 
       - name: Run the script
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/credentials.json  # Path to the decoded credentials
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
           GOOGLE_APPLICATION_GOOGLEADS: ${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-        run: python githubmain.py  # Ensure this matches the actual name of your script
+        run: |
+          python githubmain.py  # Ensure this matches the actual name of your script
