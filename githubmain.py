@@ -9,13 +9,17 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 # Load Google Sheets API credentials from environment variable
 def load_google_sheets_credentials():
-    credentials_json = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
+    credentials_json = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+    if credentials_json is None:
+        raise ValueError("GOOGLE_APPLICATION_CREDENTIALS environment variable is not set.")
     with open('credentials.json', 'wb') as f:
         f.write(base64.b64decode(credentials_json))
 
 # Load Google Ads API credentials from environment variable
 def load_google_ads_credentials():
-    google_ads_json = os.environ['GOOGLE_APPLICATION_GOOGLEADS']
+    google_ads_json = os.environ.get('GOOGLE_APPLICATION_GOOGLEADS')
+    if google_ads_json is None:
+        raise ValueError("GOOGLE_APPLICATION_GOOGLEADS environment variable is not set.")
     with open('googleads.yaml', 'wb') as f:
         f.write(base64.b64decode(google_ads_json))
 
@@ -149,45 +153,49 @@ def send_email(line_item_id, impressions, threshold, status):
         print(f"Failed to send email: {e}")
 
 def main():
-    load_google_sheets_credentials()  # Load Google Sheets credentials
-    load_google_ads_credentials()  # Load Google Ads credentials
-    client = ad_manager.AdManagerClient.LoadFromStorage('googleads.yaml')
-   
-    # Fetch line items and thresholds from Google Sheets
-    sheet_url = 'https://docs.google.com/spreadsheets/d/1m4fIYSVMn4rZw4atrYwQYtkV_NXY9KVHKcGwKf4FSAU/edit?gid=0#gid=0'
-    sheet_name = 'LineItemAndThreshold'
-    line_items_data = get_google_sheets_data(sheet_url, sheet_name)
-   
-    completed_ids = []  # List to keep track of completed line items
+    try:
+        load_google_sheets_credentials()  # Load Google Sheets credentials
+        load_google_ads_credentials()  # Load Google Ads credentials
+        client = ad_manager.AdManagerClient.LoadFromStorage('googleads.yaml')
+       
+        # Fetch line items and thresholds from Google Sheets
+        sheet_url = 'https://docs.google.com/spreadsheets/d/1m4fIYSVMn4rZw4atrYwQYtkV_NXY9KVHKcGwKf4FSAU/edit?gid=0#gid=0'
+        sheet_name = 'LineItemAndThreshold'
+        line_items_data = get_google_sheets_data(sheet_url, sheet_name)
+       
+        completed_ids = []  # List to keep track of completed line items
 
-    # Loop through each line item and check if it needs to be paused
-    for record in line_items_data:
-        line_item_id = str(record['Line Item ID'])
-        threshold = int(record['Impression Threshold'])
-       
-        impressions = get_line_item_stats(client, line_item_id)
-       
-        # Get line item status before deciding to pause
-        line_item_status = get_line_item_status(client, line_item_id)
-       
-        if line_item_status == 'COMPLETED':
-            print(f"Line item {line_item_id} is completed. Removing from monitoring.")
-            completed_ids.append(line_item_id)  # Add to completed list
-            send_email(line_item_id, impressions, threshold, line_item_status)
-        elif isinstance(impressions, int) and impressions >= threshold:
-            print(f"Impressions: {impressions}. Pausing line item {line_item_id}.")
-            if line_item_status == 'ACTIVE':
-                pause_line_item(client, line_item_id)
+        # Loop through each line item and check if it needs to be paused
+        for record in line_items_data:
+            line_item_id = str(record['Line Item ID'])
+            threshold = int(record['Impression Threshold'])
+           
+            impressions = get_line_item_stats(client, line_item_id)
+           
+            # Get line item status before deciding to pause
+            line_item_status = get_line_item_status(client, line_item_id)
+           
+            if line_item_status == 'COMPLETED':
+                print(f"Line item {line_item_id} is completed. Removing from monitoring.")
+                completed_ids.append(line_item_id)  # Add to completed list
+                send_email(line_item_id, impressions, threshold, line_item_status)
+            elif isinstance(impressions, int) and impressions >= threshold:
+                print(f"Impressions: {impressions}. Pausing line item {line_item_id}.")
+                if line_item_status == 'ACTIVE':
+                    pause_line_item(client, line_item_id)
+                else:
+                    print(f"Line item {line_item_id} is in status '{line_item_status}', cannot be paused.")
+                send_email(line_item_id, impressions, threshold, line_item_status)  # Send email when threshold is hit
             else:
-                print(f"Line item {line_item_id} is in status '{line_item_status}', cannot be paused.")
-            send_email(line_item_id, impressions, threshold, line_item_status)  # Send email when threshold is hit
-        else:
-            print(f"Impressions: {impressions}. No need to pause yet.")
-            send_email(line_item_id, impressions, threshold, line_item_status)  # Send status update email
+                print(f"Impressions: {impressions}. No need to pause yet.")
+                send_email(line_item_id, impressions, threshold, line_item_status)  # Send status update email
 
-    # Update Google Sheets to remove completed line items
-    if completed_ids:
-        update_google_sheets(sheet_url, sheet_name, completed_ids)
+        # Update Google Sheets to remove completed line items
+        if completed_ids:
+            update_google_sheets(sheet_url, sheet_name, completed_ids)
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
     main()
