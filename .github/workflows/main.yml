@@ -1,31 +1,31 @@
-name: Run GitHub Main Script Every 5 Minutes
+name: Run Script Every 15 Minutes
 
 on:
   schedule:
-    - cron: '*/5 * * * *'  # This will run the workflow every 5 minutes
+    - cron: '*/15 * * * *'  # This sets the schedule to run every 15 minutes
   workflow_dispatch:  # Allows manual triggering of the workflow
 
 jobs:
-  run-script:
-    runs-on: ubuntu-latest  # Use the latest Ubuntu version
+  run_script:
+    runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3  # Check out the repository code
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v5  # Update to the latest version of the setup-python action
-      with:
-        python-version: '3.12.3'  # Specify the version of Python
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'  # Specify the Python version you need
 
-    - name: Install Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt  # Install dependencies
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt  # Make sure you have a requirements.txt file with your dependencies
 
-    - name: Run GitHub Main Script
-      env:
-        EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}  # Access your email password from GitHub Secrets
-        GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}  # Access your credentials
-      run: |
-        python githubmain.py  # Run your Python script
+      - name: Create credentials file from secrets
+        run: |
+          echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" > temp_credentials.json
+          echo "${{ secrets.EMAIL_PASSWORD }}" > email_password.txt
+
+      - name: Run the script
+        run: python githubmain.py
