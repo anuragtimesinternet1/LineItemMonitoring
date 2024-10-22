@@ -9,19 +9,15 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 # Load Google Sheets API credentials from environment variable
 def load_google_sheets_credentials():
-    credentials_json = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
-    if credentials_json is None:
-        raise ValueError("GOOGLE_APPLICATION_CREDENTIALS environment variable is not set.")
-    with open('credentials.json', 'wb') as f:
-        f.write(base64.b64decode(credentials_json))
+    # No base64 decoding here since we directly write the JSON to the file
+    credentials_file = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
+    # Assuming credentials_file is a path now.
+    return credentials_file
 
-# Load Google Ads API credentials from environment variable
 def load_google_ads_credentials():
-    google_ads_json = os.environ.get('GOOGLE_APPLICATION_GOOGLEADS')
-    if google_ads_json is None:
-        raise ValueError("GOOGLE_APPLICATION_GOOGLEADS environment variable is not set.")
-    with open('googleads.yaml', 'wb') as f:
-        f.write(base64.b64decode(google_ads_json))
+    # No base64 decoding here since we directly write the YAML to the file
+    google_ads_file = os.environ['GOOGLE_APPLICATION_GOOGLEADS']
+    return google_ads_file
 
 # Fetches the line items and thresholds from Google Sheets.
 def get_google_sheets_data(sheet_url, sheet_name):
