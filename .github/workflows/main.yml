@@ -28,11 +28,12 @@ jobs:
           echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" > $HOME/credentials.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/credentials.json" >> $GITHUB_ENV
 
-      - name: Set other environment variables
+      - name: Check GOOGLE_APPLICATION_GOOGLEADS secret
         run: |
-          echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> $GITHUB_ENV
-          
-          # Decode GOOGLE_APPLICATION_GOOGLEADS if it's Base64 encoded
+          echo "${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}" | wc -c # Prints the character count of the secret
+
+      - name: Decode GOOGLE_APPLICATION_GOOGLEADS secret
+        run: |
           echo "${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}" | base64 --decode > $HOME/google_ads_config.json
           echo "GOOGLE_APPLICATION_GOOGLEADS=$HOME/google_ads_config.json" >> $GITHUB_ENV
 
