@@ -1,8 +1,9 @@
-name: Scheduled Python Script
+name: Scheduled Python Script 15 minutes
 
 on:
   schedule:
     - cron: '*/15 * * * *'  # This runs the job at the start of every hour
+  workflow_dispatch:  # Allows manual triggering of the workflow
 
 jobs:
   run-script:
