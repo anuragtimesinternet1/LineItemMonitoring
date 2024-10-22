@@ -18,30 +18,17 @@ jobs:
         with:
           python-version: '3.12.3'  # Specify the Python version you need
 
-      - name: Debug Environment Variables
-        run: printenv  # This will print all environment variables for debugging
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt  # Ensure you have a requirements.txt file with all dependencies
 
-      # Create GOOGLE_APPLICATION_CREDENTIALS file
       - name: Create GOOGLE_APPLICATION_CREDENTIALS file
         run: echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" > $HOME/credentials.json
 
-      # Create googleads.yaml file from base64
       - name: Create googleads.yaml file
-        run: |
-          echo "${{ secrets.GOOGLEADS_CONFIG }}" | base64 --decode > $HOME/googleads.yaml
-        shell: bash
+        run: echo "${{ secrets.GOOGLEADS_CONFIG }}" > $HOME/googleads.yaml
 
-      # Debug googleads.yaml content
-      - name: Debug googleads.yaml content
-        run: cat $HOME/googleads.yaml
-        shell: bash
-
-      # Set environment variables
       - name: Set environment variables
         run: |
           echo "GOOGLE_APPLICATION_GOOGLEADS=$HOME/googleads.yaml" >> $GITHUB_ENV
@@ -52,3 +39,4 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: $HOME/credentials.json
           GOOGLE_APPLICATION_GOOGLEADS: $HOME/googleads.yaml
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
