@@ -20,40 +20,34 @@ jobs:
         with:
           python-version: '3.12.3'  # Specify the Python version you need
 
-      # Step 3: Debug environment variables (optional for troubleshooting)
-      - name: Debug Environment Variables
-        run: printenv  # This will print all environment variables for debugging
-
-      # Step 4: Install dependencies using pip
+      # Step 3: Install dependencies using pip
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt  # Ensure you have a requirements.txt file with all dependencies
 
-      # Step 5: Set GOOGLE_APPLICATION_CREDENTIALS from GitHub Secrets
+      # Step 4: Set GOOGLE_APPLICATION_CREDENTIALS from GitHub Secrets
       - name: Create GOOGLE_APPLICATION_CREDENTIALS file
         run: |
           echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" > $HOME/credentials.json
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/credentials.json" >> $GITHUB_ENV
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: $HOME/credentials.json  # Set it explicitly in the env block
 
-      # Step 6: Create googleads.yaml from a base64-encoded secret
+      # Step 5: Create googleads.yaml from a base64-encoded secret
       - name: Create googleads.yaml file
         run: |
           echo "${{ secrets.GOOGLEADS_CONFIG }}" | base64 --decode > $HOME/googleads.yaml
+        env:
+          GOOGLEADS_CONFIG: $HOME/googleads.yaml  # Set this in the env block
 
-      # Step 7: Set GOOGLE_APPLICATION_GOOGLEADS (if required by your script)
-      - name: Set GOOGLE_APPLICATION_GOOGLEADS
-        run: echo "GOOGLE_APPLICATION_GOOGLEADS=${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}" >> $GITHUB_ENV
-
-      # Step 8: Set EMAIL_PASSWORD from GitHub Secrets (for your script if necessary)
+      # Step 6: Set EMAIL_PASSWORD from GitHub Secrets
       - name: Set EMAIL_PASSWORD
         run: echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> $GITHUB_ENV
 
-      # Step 9: Run the Python script
+      # Step 7: Run the Python script
       - name: Run the Python script
         run: python githubmain.py
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: $HOME/credentials.json  # Ensure this environment variable is passed correctly
+          GOOGLE_APPLICATION_CREDENTIALS: $HOME/credentials.json  # Make sure to pass this to the script
           GOOGLEADS_CONFIG: $HOME/googleads.yaml  # Ensure googleads.yaml is set in the environment
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}  # Pass email password secret to the script
-          GOOGLE_APPLICATION_GOOGLEADS: $HOME/googleads.yaml  # Set this explicitly if required
