@@ -4,7 +4,7 @@ on:
   schedule:
     # Runs every 15 minutes
     - cron: '*/15 * * * *'
-  workflow_dispatch:  # Allows manual trigger from the GitHub Actions UI
+  workflow_dispatch: 
 
 jobs:
   run_script:
@@ -17,27 +17,21 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.12.3'
+          python-version: '3.12.3'  # Specify the Python version you are using
 
       - name: Install dependencies
         run: |
           pip install googleads gspread oauth2client
 
-      - name: Check credentials file
+      - name: Decode GOOGLE_APPLICATION_CREDENTIALS
         run: |
-          echo "Contents of GOOGLE_APPLICATION_CREDENTIALS:"
           echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" | base64 --decode > credentials.json
-          cat credentials.json  # Print the contents (not recommended for production)
-
-      - name: Check googleads.yaml file
-        run: |
-          echo "Contents of GOOGLE_APPLICATION_GOOGLEADS:"
-          echo "${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}" | base64 --decode > googleads.yaml
-          cat googleads.yaml  # Print the contents (not recommended for production)
+          # Optional: Print the contents (not recommended for production)
+          # cat credentials.json 
 
       - name: Run the script
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+          GOOGLE_APPLICATION_CREDENTIALS: ./credentials.json
           GOOGLE_APPLICATION_GOOGLEADS: ${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
         run: |
