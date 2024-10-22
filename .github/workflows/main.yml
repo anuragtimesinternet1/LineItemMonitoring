@@ -10,7 +10,52 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout codename: Scheduled Python Script 15 minutes
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'  # This runs the job every 15 minutes
+  workflow_dispatch:  # Allows manual triggering of the workflow
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.12.3'  # Specify the Python version you need
+
+      - name: Debug Environment Variables
+        run: printenv  # This will print all environment variables for debugging
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt  # Ensure you have a requirements.txt file with all dependencies
+
+      - name: Create GOOGLE_APPLICATION_CREDENTIALS file
+        run: |
+          echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" > $HOME/credentials.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/credentials.json" >> $GITHUB_ENV
+
+      - name: Create googleads.yaml file
+        run: |
+          echo "${{ secrets.GOOGLEADS_CONFIG }}" | base64 --decode > $HOME/googleads.yaml
+          echo "GOOGLE_APPLICATION_GOOGLEADS=$HOME/googleads.yaml" >> $GITHUB_ENV  # Set this environment variable
+
+      - name: Set EMAIL_PASSWORD
+        run: echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> $GITHUB_ENV
+
+      - name: Run the Python script
+        run: python githubmain.py
+        env:
+          GOOGLE_APPLICATION_GOOGLEADS: ${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}  # Ensure this variable is passed correctly
+
         uses: actions/checkout@v2
 
       - name: Set up Python
