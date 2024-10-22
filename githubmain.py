@@ -9,93 +9,105 @@ from oauth2client.service_account import ServiceAccountCredentials
 def get_google_sheets_data(sheet_url, sheet_name):
     """Fetches the line items and thresholds from Google Sheets."""
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_name(os.getenv("GOOGLE_APPLICATION_CREDENTIALS"), scope)
     client = gspread.authorize(creds)
-    sheet = client.open_by_url(sheet_url).worksheet(sheet_name)
-    data = sheet.get_all_records()
-    return data
-
+    
+    try:
+        sheet = client.open_by_url(sheet_url).worksheet(sheet_name)
+        data = sheet.get_all_records()
+        return data
+    except Exception as e:
+        print(f"Error fetching data from Google Sheets: {e}")
+        return []
 
 def update_google_sheets(sheet_url, sheet_name, completed_ids):
     """Updates Google Sheets to remove completed line item IDs."""
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_name(os.getenv("GOOGLE_APPLICATION_CREDENTIALS"), scope)
     client = gspread.authorize(creds)
-    sheet = client.open_by_url(sheet_url).worksheet(sheet_name)
 
-    # Get current records
-    current_data = sheet.get_all_records()
-    updated_data = [record for record in current_data if str(record['Line Item ID']) not in completed_ids]
+    try:
+        sheet = client.open_by_url(sheet_url).worksheet(sheet_name)
+        current_data = sheet.get_all_records()
+        updated_data = [record for record in current_data if str(record['Line Item ID']) not in completed_ids]
 
-    # Clear the existing data and update with the new data
-    sheet.clear()
-   
-    if current_data:
-        sheet.append_row(list(current_data[0].keys()))  # Append headers
-        for data in updated_data:  # Append the updated data
-            sheet.append_row(list(data.values()))  # Append the actual data
-    else:
-        print("No current data available to append.")
+        # Clear the existing data and update with the new data
+        sheet.clear()
+
+        if current_data:
+            sheet.append_row(list(current_data[0].keys()))  # Append headers
+            for data in updated_data:  # Append the updated data
+                sheet.append_row(list(data.values()))  # Append the actual data
+        else:
+            print("No current data available to append.")
+    except Exception as e:
+        print(f"Error updating Google Sheets: {e}")
 
 def get_line_item_stats(client, line_item_id):
     """Retrieve the stats for a specific line item."""
     line_item_service = client.GetService('LineItemService', version='v202408')
-   
+    
     statement = (ad_manager.StatementBuilder()
                  .Where('id = :id')
                  .WithBindVariable('id', line_item_id)
                  .Limit(1))
 
-    response = line_item_service.getLineItemsByStatement(statement.ToStatement())
-   
-    if 'results' in response and len(response['results']) > 0:
-        line_item = response['results'][0]
-        if hasattr(line_item, 'stats') and line_item.stats is not None:
-            impressions = line_item.stats.impressionsDelivered
-            return impressions if impressions is not None else 0
-           
+    try:
+        response = line_item_service.getLineItemsByStatement(statement.ToStatement())
+        if 'results' in response and len(response['results']) > 0:
+            line_item = response['results'][0]
+            if hasattr(line_item, 'stats') and line_item.stats is not None:
+                impressions = line_item.stats.impressionsDelivered
+                return impressions if impressions is not None else 0
+    except Exception as e:
+        print(f"Error fetching stats for line item {line_item_id}: {e}")
+
     return 0
 
 def get_line_item_status(client, line_item_id):
     """Retrieve the status for a specific line item."""
     line_item_service = client.GetService('LineItemService', version='v202408')
-   
+    
     statement = (ad_manager.StatementBuilder()
                  .Where('id = :id')
                  .WithBindVariable('id', line_item_id)
                  .Limit(1))
 
-    response = line_item_service.getLineItemsByStatement(statement.ToStatement())
-   
-    if 'results' in response and len(response['results']) > 0:
-        line_item = response['results'][0]
-        return line_item.status if hasattr(line_item, 'status') else None
-           
+    try:
+        response = line_item_service.getLineItemsByStatement(statement.ToStatement())
+        if 'results' in response and len(response['results']) > 0:
+            line_item = response['results'][0]
+            return line_item.status if hasattr(line_item, 'status') else None
+    except Exception as e:
+        print(f"Error fetching status for line item {line_item_id}: {e}")
+
     return None
 
 def pause_line_item(client, line_item_id):
     """Pause the specified line item if it is in a state that allows it to be paused."""
     line_item_service = client.GetService('LineItemService', version='v202408')
-   
+    
     statement = (ad_manager.StatementBuilder()
                  .Where('id = :id')
                  .WithBindVariable('id', line_item_id)
                  .Limit(1))
-   
-    line_items = line_item_service.getLineItemsByStatement(statement.ToStatement())
 
-    if 'results' in line_items and len(line_items['results']) > 0:
-        line_item = line_items['results'][0]
-       
-        # Check if the line item can be paused
-        if line_item.status == 'ACTIVE':
-            action = {'xsi_type': 'PauseLineItems'}
-            line_item_service.performLineItemAction(action, statement.ToStatement())
-            print(f"Line item {line_item_id} has been paused.")
+    try:
+        line_items = line_item_service.getLineItemsByStatement(statement.ToStatement())
+        if 'results' in line_items and len(line_items['results']) > 0:
+            line_item = line_items['results'][0]
+
+            # Check if the line item can be paused
+            if line_item.status == 'ACTIVE':
+                action = {'xsi_type': 'PauseLineItems'}
+                line_item_service.performLineItemAction(action, statement.ToStatement())
+                print(f"Line item {line_item_id} has been paused.")
+            else:
+                print(f"Line item {line_item_id} is in status '{line_item.status}', cannot be paused.")
         else:
-            print(f"Line item {line_item_id} is in status '{line_item.status}', cannot be paused.")
-    else:
-        print(f"Line item {line_item_id} not found.")
+            print(f"Line item {line_item_id} not found.")
+    except Exception as e:
+        print(f"Error pausing line item {line_item_id}: {e}")
 
 def send_email(line_item_id, impressions, threshold, status):
     """Send an email to notify about the line item status."""
@@ -174,4 +186,5 @@ def main():
     if completed_ids:
         update_google_sheets(sheet_url, sheet_name, completed_ids)
 
-main()
+if __name__ == "__main__":
+    main()
