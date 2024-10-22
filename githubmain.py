@@ -7,6 +7,7 @@ from googleads import ad_manager
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import logging
+import tempfile
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -19,12 +20,22 @@ def load_google_sheets_credentials():
         raise ValueError("Missing GOOGLE_APPLICATION_CREDENTIALS")
     return credentials_file
 
+# Load Google Ads credentials from GitHub secret
 def load_google_ads_credentials():
-    google_ads_file = os.environ.get('GOOGLE_APPLICATION_GOOGLEADS')
-    if not google_ads_file:
+    google_ads_secret = os.environ.get('GOOGLE_APPLICATION_GOOGLEADS')
+    if not google_ads_secret:
         logging.error("GOOGLE_APPLICATION_GOOGLEADS environment variable not set.")
         raise ValueError("Missing GOOGLE_APPLICATION_GOOGLEADS")
-    return google_ads_file
+
+    # Decode the base64 secret and write it to a temporary file
+    google_ads_file = tempfile.NamedTemporaryFile(delete=False, suffix='.yaml')
+    google_ads_file.write(base64.b64decode(google_ads_secret))
+    google_ads_file.close()
+    
+    # Log the path to the temporary file
+    logging.info(f"Temporary googleads.yaml created at: {google_ads_file.name}")
+
+    return google_ads_file.name  # Return the path to the temp file
 
 # Fetches the line items and thresholds from Google Sheets.
 def get_google_sheets_data(sheet_url, sheet_name):
@@ -161,26 +172,26 @@ def send_email(line_item_id, impressions, threshold, status):
 
 def main():
     load_google_sheets_credentials()  # Load Google Sheets credentials
-    load_google_ads_credentials()  # Load Google Ads credentials
-    client = ad_manager.AdManagerClient.LoadFromStorage(load_google_ads_credentials())
-   
+    google_ads_file_path = load_google_ads_credentials()  # Load Google Ads credentials
+    client = ad_manager.AdManagerClient.LoadFromStorage(google_ads_file_path)
+
     # Fetch line items and thresholds from Google Sheets
     sheet_url = 'https://docs.google.com/spreadsheets/d/1m4fIYSVMn4rZw4atrYwQYtkV_NXY9KVHKcGwKf4FSAU/edit?gid=0#gid=0'
     sheet_name = 'LineItemAndThreshold'
     line_items_data = get_google_sheets_data(sheet_url, sheet_name)
-   
+
     completed_ids = []  # List to keep track of completed line items
 
     # Loop through each line item and check if it needs to be paused
     for record in line_items_data:
         line_item_id = str(record['Line Item ID'])
         threshold = int(record['Impression Threshold'])
-       
+
         impressions = get_line_item_stats(client, line_item_id)
-       
+
         # Get line item status before deciding to pause
         line_item_status = get_line_item_status(client, line_item_id)
-       
+
         if line_item_status == 'COMPLETED':
             logging.info(f"Line item {line_item_id} is completed. Removing from monitoring.")
             completed_ids.append(line_item_id)  # Add to completed list
