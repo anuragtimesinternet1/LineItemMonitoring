@@ -1,32 +1,32 @@
-name: Run Python Script on Schedule
+name: Run Line Item Monitoring
 
 on:
   schedule:
-    # Runs at 00:00 UTC every day
-    - cron: '*/15 * * * *' 
-  workflow_dispatch:  # Allows manual triggering of the workflow
+    # Runs every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch:  # Allow manual trigger from the GitHub interface
 
 jobs:
-  run-script:
+  run_script:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v2
 
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.12.3'  # Specify your desired Python version
+          python-version: '3.12.3'  # Specify the Python version you are using
 
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install googleads gspread oauth2client  # Add other dependencies as needed
+          pip install googleads gspread oauth2client
 
-      - name: Run the Python script
+      - name: Run the script
         env:
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
           GOOGLE_APPLICATION_GOOGLEADS: ${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}
-        run: python githubmain.py
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+        run: |
+          python githubmain.py  # Ensure this matches the actual name of your script
