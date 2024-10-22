@@ -32,8 +32,9 @@ jobs:
         run: |
           echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> $GITHUB_ENV
           
-          # For multi-line variables, write them directly to the environment
-          echo "${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}" >> $GITHUB_ENV
+          # Decode GOOGLE_APPLICATION_GOOGLEADS if it's Base64 encoded
+          echo "${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}" | base64 --decode > $HOME/google_ads_config.json
+          echo "GOOGLE_APPLICATION_GOOGLEADS=$HOME/google_ads_config.json" >> $GITHUB_ENV
 
       - name: Run the Python script
         run: python githubmain.py
