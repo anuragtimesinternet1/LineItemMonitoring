@@ -26,12 +26,12 @@ jobs:
       - name: Print GOOGLE_APPLICATION_CREDENTIALS
         run: |
           echo "Contents of GOOGLE_APPLICATION_CREDENTIALS:"
-          echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" | base64 --decode  # Decoding base64 if necessary
+          echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"  # Print the secret directly
 
       - name: Print GOOGLE_APPLICATION_GOOGLEADS
         run: |
           echo "Contents of GOOGLE_APPLICATION_GOOGLEADS:"
-          echo "${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}" | base64 --decode  # Decoding base64 if necessary
+          echo "${{ secrets.GOOGLE_APPLICATION_GOOGLEADS }}"  # Print the secret directly
 
       - name: Run the script
         env:
