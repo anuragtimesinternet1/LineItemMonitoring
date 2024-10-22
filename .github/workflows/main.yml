@@ -2,7 +2,7 @@ name: Scheduled Python Script 15 minutes
 
 on:
   schedule:
-    - cron: '*/15 * * * *'  # This runs the job at the start of every hour
+    - cron: '*/15 * * * *'  # This runs the job every 15 minutes
   workflow_dispatch:  # Allows manual triggering of the workflow
 
 jobs:
@@ -23,14 +23,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt  # Ensure you have a requirements.txt file with all dependencies
 
-      - name: Create googleads.yaml from secret
+      - name: Create GOOGLE_APPLICATION_CREDENTIALS file
+        run: |
+          echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" > $HOME/credentials.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/credentials.json" >> $GITHUB_ENV
+
+      - name: Create googleads.yaml file
         run: |
           echo "${{ secrets.GOOGLEADS_CONFIG }}" | base64 --decode > $HOME/googleads.yaml
 
-      - name: Set other environment variables
-        run: |
-          echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> $GITHUB_ENV
-          echo "GOOGLE_APPLICATION_CREDENTIALS=${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" >> $GITHUB_ENV
+      - name: Set EMAIL_PASSWORD
+        run: echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> $GITHUB_ENV
 
       - name: Run the Python script
         run: python githubmain.py
