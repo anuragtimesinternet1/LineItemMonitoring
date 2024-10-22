@@ -17,6 +17,9 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.12.3'  # Specify the Python version you need
+          
+      - name: Debug Environment Variables
+        run: printenv  # This will print all environment variables for debugging
 
       - name: Install dependencies
         run: |
