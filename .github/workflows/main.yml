@@ -26,22 +26,26 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt  # Ensure you have a requirements.txt file with all dependencies
 
-      # Save googleads.yaml content from the secret and decode it from base64
-      - name: Create googleads.yaml file from base64
+      # Create GOOGLE_APPLICATION_CREDENTIALS file
+      - name: Create GOOGLE_APPLICATION_CREDENTIALS file
+        run: echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" > $HOME/credentials.json
+
+      # Create googleads.yaml file from base64
+      - name: Create googleads.yaml file
         run: |
           echo "${{ secrets.GOOGLEADS_CONFIG }}" | base64 --decode > $HOME/googleads.yaml
         shell: bash
 
-      # Set the environment variable for Google Ads config
-      - name: Set GOOGLE_APPLICATION_GOOGLEADS
-        run: echo "GOOGLE_APPLICATION_GOOGLEADS=$HOME/googleads.yaml" >> $GITHUB_ENV
-
-      - name: Set GOOGLE_APPLICATION_CREDENTIALS
-        run: echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" > $HOME/credentials.json
+      # Debug googleads.yaml content
+      - name: Debug googleads.yaml content
+        run: cat $HOME/googleads.yaml
         shell: bash
 
-      - name: Set EMAIL_PASSWORD
-        run: echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> $GITHUB_ENV
+      # Set environment variables
+      - name: Set environment variables
+        run: |
+          echo "GOOGLE_APPLICATION_GOOGLEADS=$HOME/googleads.yaml" >> $GITHUB_ENV
+          echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> $GITHUB_ENV
 
       - name: Run the Python script
         run: python githubmain.py
